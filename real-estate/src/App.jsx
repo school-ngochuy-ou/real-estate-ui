@@ -7,7 +7,7 @@ function App() {
 	return (
 		<div className="App">
 			<Navbar />
-			<Route path="/projects" render={
+			<Route path="/" render={
 				(props) => <ProjectPage {...props} />
 			}/>
 		</div>

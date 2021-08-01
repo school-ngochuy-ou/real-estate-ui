@@ -1,13 +1,27 @@
 import { useEffect, useReducer } from 'react';
 import { $fetch } from '../fetch.js';
 
+const ALL = "ALL";
+const MIN = "MIN";
+const MAX = "MAX";
+
 const STORE = {
 	homeTypes: [],
-	projects: []
+	projects: {
+		elements: [],
+		view: null
+	},
+	filter: {
+		homeType: ALL,
+		price: [0, 10000000],
+		floorSpace: [0, 10000000],
+	}
 };
 
 const SET_HOMETYPES = "SET_HOMETYPES";
 const SET_PROJECTS = "SET_PROJECTS";
+const SET_PROJECTS_VIEW = "SET_PROJECTS_VIEW";
+const MODIFY_FILTER = "MODIFY_FILTER";
 
 const SORTS_NO_SORT = "NO_SORT";
 const SORTS_LOWEST_PRICE = "LOWEST_PRICE";
@@ -17,6 +31,34 @@ export default function ProjectPage() {
 	const [store, dispatchStore] = useReducer(
 		(oldState, { type = null, payload = null} = {}) => {
 			switch (type) {
+				case SET_PROJECTS_VIEW: {
+					if (payload != null && !Array.isArray(payload)) {
+						return oldState;
+					}
+
+					return {
+						...oldState,
+						projects: {
+							...oldState.projects,
+							view: payload
+						}
+					};
+				}
+				case MODIFY_FILTER: {
+					const { name, value } = payload;
+
+					if (typeof name !== 'string') {
+						return oldState;
+					}
+
+					return  {
+						...oldState,
+						filter: {
+							...oldState.filter,
+							[name]: value
+						}
+					};
+				}
 				case SET_HOMETYPES: {
 					if (!Array.isArray(payload)) {
 						return oldState;
@@ -25,17 +67,22 @@ export default function ProjectPage() {
 					return {
 						...oldState,
 						homeTypes: payload
-					}
+					};
 				}
 				case SET_PROJECTS: {
 					if (!Array.isArray(payload)) {
 						return oldState;
 					}
 
+					const { projects } = oldState;
+
 					return {
 						...oldState,
-						projects: payload
-					}
+						projects: {
+							...projects,
+							elements: payload
+						}
+					};
 				}
 				default: {
 					return oldState;
@@ -87,7 +134,7 @@ export default function ProjectPage() {
 		switch (event.target.value) {
 			case SORTS_HIGHEST_PRICE: {
 				const projectList = [
-					...store.projects
+					...store.projects.elements
 				].sort((left, right) => left.price < right.price ? 1 : -1);
 
 				dispatchStore({
@@ -99,7 +146,7 @@ export default function ProjectPage() {
 			}
 			case SORTS_LOWEST_PRICE: {
 				const projectList = [
-					...store.projects
+					...store.projects.elements
 				].sort((left, right) => left.price > right.price ? 1 : -1);
 
 				dispatchStore({
@@ -112,6 +159,107 @@ export default function ProjectPage() {
 			default: return;
 		}
 	};
+	const filter = async ({ homeType = homeTypeCriteria, priceStart = priceCriteria[0], priceEnd = priceCriteria[1], spaceStart = floorSpaceCriteria[0], spaceEnd = floorSpaceCriteria[1]}) => {
+		const [filterRes, filterErr] = await $fetch(`/api/projects?${homeType !== ALL ? `homeTypeId.equals=${homeType}` : ""}&price.greaterThanOrEqual=${priceStart}&price.lessThanOrEqual=${priceEnd}&floorSpace.greaterThanOrEqual=${spaceStart}&floorSpace.lessThanOrEqual=${spaceEnd}`, {
+			method: 'GET',
+			headers: {
+				'Accept': 'application/json'
+			}
+		});
+
+		if (filterErr) {
+			console.log(filterErr);
+			return [];
+		}
+
+		return await filterRes.json();
+	};
+	const onPriceChange = async (limitType, event) => {
+		const value = event.target.value === 0 ? 0 : parseInt(event.target.value);
+
+		if (value < 0 || isNaN(value)) {
+			return;
+		}
+
+		const newPrice = [ ...store.filter.price ];
+
+		newPrice[limitType === MIN ? 0 : 1] = value;
+
+		let list = await filter({
+			priceStart: newPrice[0],
+			priceEnd: newPrice[1],
+		});
+
+		dispatchStore({
+			type: SET_PROJECTS_VIEW,
+			payload: list
+		});
+		dispatchStore({
+			type: MODIFY_FILTER,
+			payload: {
+				name: "price",
+				value: newPrice
+			}
+		});
+		return;
+	};
+	const onFloorSpaceChange = async (limitType, event) => {
+		const value = event.target.value === 0 ? 0 : parseInt(event.target.value);
+
+		if (value < 0 || isNaN(value)) {
+			return;
+		}
+
+		const newSpace = [ ...store.filter.floorSpace ];
+
+		newSpace[limitType === MIN ? 0 : 1] = value;
+
+		let list = await filter({
+			spaceStart: newSpace[0],
+			spaceEnd: newSpace[1],
+		});
+
+		dispatchStore({
+			type: SET_PROJECTS_VIEW,
+			payload: list
+		});
+		dispatchStore({
+			type: MODIFY_FILTER,
+			payload: {
+				name: "floorSpace",
+				value: newSpace
+			}
+		});
+		return;
+	};
+	const onHomeTypeChange = async (event) => {
+		const typeId = event.target.value;
+
+		if (typeId.length === 0 || typeId === store.filter.homeType) {
+			console.log("skip");
+			return;	
+		}
+
+		const list = await filter({homeType: typeId});
+
+		dispatchStore({
+			type: MODIFY_FILTER,
+			payload: {
+				name: "homeType",
+				value: typeId
+			}
+		});
+		dispatchStore({
+			type: SET_PROJECTS_VIEW,
+			payload: list
+		});
+	};
+	const { filter: {
+		homeType: homeTypeCriteria,
+		price: priceCriteria,
+		floorSpace: floorSpaceCriteria
+	}} = store;
+	const renderedElements = store.projects.view != null ? store.projects.view : store.projects.elements;
 
 	return (
 		<div
@@ -133,8 +281,11 @@ export default function ProjectPage() {
 						</div>
 						<div className="uk-margin">
 							<label>Home type</label>
-							<select className="uk-select">
-								<option>All Homes</option>
+							<select
+								className="uk-select"
+								onChange={onHomeTypeChange}
+							>
+								<option value={ALL}>All Homes</option>
 								{
 									store.homeTypes.map(type => (
 										<option
@@ -162,6 +313,7 @@ export default function ProjectPage() {
 										className="uk-input"
 										type="number"
 										placeholder="0"
+										onChange={(event) => onPriceChange(MIN, event)}
 									/>
 								</div>
 								<div>
@@ -169,6 +321,7 @@ export default function ProjectPage() {
 										className="uk-input"
 										type="number"
 										placeholder="10000000"
+										onChange={(event) => onPriceChange(MAX, event)}
 									/>
 								</div>
 							</div>
@@ -184,6 +337,7 @@ export default function ProjectPage() {
 										className="uk-input"
 										type="number"
 										placeholder="0"
+										onChange={(event) => onFloorSpaceChange(MIN, event)}
 									/>
 								</div>
 								<div>
@@ -191,6 +345,7 @@ export default function ProjectPage() {
 										className="uk-input"
 										type="number"
 										placeholder="10000000"
+										onChange={(event) => onFloorSpaceChange(MAX, event)}
 									/>
 								</div>
 							</div>
@@ -276,11 +431,11 @@ export default function ProjectPage() {
 					</header>
 					<section>
 						<div
-							className="uk-grid-small uk-grid-medium uk-child-width-1-4@s uk-flex-center uk-text-center"
+							className="uk-grid-small uk-grid-medium uk-child-width-1-4@s uk-flex-center uk-text-center uk-grid-match"
 							uk-grid=""
 						>
 						{
-							store.projects.map(project => (
+							renderedElements.map(project => (
 								<div key={project.id}>
 									<div
 										className="uk-card uk-box-shadow-large uk-card-default"
