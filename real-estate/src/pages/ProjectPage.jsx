@@ -15,6 +15,7 @@ const STORE = {
 		homeType: ALL,
 		price: [0, 10000000],
 		floorSpace: [0, 10000000],
+		extras: []
 	}
 };
 
@@ -26,6 +27,13 @@ const MODIFY_FILTER = "MODIFY_FILTER";
 const SORTS_NO_SORT = "NO_SORT";
 const SORTS_LOWEST_PRICE = "LOWEST_PRICE";
 const SORTS_HIGHEST_PRICE = "HIGHEST_PRICE";
+
+const EXTRA_ELEVATORS = { id: 1, name: "Elevators" };
+const EXTRA_SWIMMINGPOOL = { id: 2, name: "Swimming pool" };
+const EXTRA_BASEMENT = { id: 3, name: "Finished basement" };
+const EXTRA_GYM = { id: 4, name: "Gym" };
+
+const EXTRAS = [EXTRA_ELEVATORS, EXTRA_SWIMMINGPOOL, EXTRA_BASEMENT, EXTRA_GYM];
 
 export default function ProjectPage() {
 	const [store, dispatchStore] = useReducer(
@@ -130,37 +138,36 @@ export default function ProjectPage() {
 			fetchStore();
 		},
 	[]);
-	const sortProjects = (event) => {
-		switch (event.target.value) {
-			case SORTS_HIGHEST_PRICE: {
-				const projectList = [
-					...store.projects.elements
-				].sort((left, right) => left.price < right.price ? 1 : -1);
-
-				dispatchStore({
-					type: SET_PROJECTS,
-					payload: projectList
-				});
-
-				return;
-			}
-			case SORTS_LOWEST_PRICE: {
-				const projectList = [
-					...store.projects.elements
-				].sort((left, right) => left.price > right.price ? 1 : -1);
-
-				dispatchStore({
-					type: SET_PROJECTS,
-					payload: projectList
-				});
-
-				return;
-			}
-			default: return;
+	const sort = (list, sortType, actionType) => {
+		let newList = [...list];
+		
+		if (sortType === SORTS_HIGHEST_PRICE) {
+			newList = [
+				...list
+			].sort((left, right) => left.price < right.price ? 1 : -1);
+		} else {
+			newList = [
+				...list
+			].sort((left, right) => left.price > right.price ? 1 : -1);
 		}
+
+		dispatchStore({
+			type: actionType,
+			payload: newList
+		});
 	};
-	const filter = async ({ homeType = homeTypeCriteria, priceStart = priceCriteria[0], priceEnd = priceCriteria[1], spaceStart = floorSpaceCriteria[0], spaceEnd = floorSpaceCriteria[1]}) => {
-		const [filterRes, filterErr] = await $fetch(`/api/projects?${homeType !== ALL ? `homeTypeId.equals=${homeType}` : ""}&price.greaterThanOrEqual=${priceStart}&price.lessThanOrEqual=${priceEnd}&floorSpace.greaterThanOrEqual=${spaceStart}&floorSpace.lessThanOrEqual=${spaceEnd}`, {
+	const sortProjects = (event) => {
+		const type = event.target.value;
+
+		if (store.projects.view == null) {
+			sort(store.projects.elements, type, SET_PROJECTS);
+			return;
+		}
+
+		sort(store.projects.view, type, SET_PROJECTS_VIEW);
+	};
+	const filter = async ({ homeType = homeTypeCriteria, priceStart = priceCriteria[0], priceEnd = priceCriteria[1], spaceStart = floorSpaceCriteria[0], spaceEnd = floorSpaceCriteria[1], extras = extrasCriteria }) => {
+		const [filterRes, filterErr] = await $fetch(`/api/projects?${homeType !== ALL ? `homeTypeId.equals=${homeType}` : ""}&price.greaterThanOrEqual=${priceStart}&price.lessThanOrEqual=${priceEnd}&floorSpace.greaterThanOrEqual=${spaceStart}&floorSpace.lessThanOrEqual=${spaceEnd}${extras.length !== 0 ? `&extraId.in=${extras.join(',')}` : ""}`, {
 			method: 'GET',
 			headers: {
 				'Accept': 'application/json'
@@ -254,10 +261,38 @@ export default function ProjectPage() {
 			payload: list
 		});
 	};
+	const onExtrasChange = async (extraId, event) => {
+		let newExtras = [...extrasCriteria];
+
+		if (event.target.checked) {
+			if (newExtras.includes(extraId)) {
+				return;
+			}
+
+			newExtras = [...newExtras, extraId];
+		} else {
+			newExtras = newExtras.filter(id => id !== extraId);
+		}
+
+		const list = await filter({ extras: newExtras });
+
+		dispatchStore({
+			type: MODIFY_FILTER,
+			payload: {
+				name: "extras",
+				value: newExtras
+			}
+		});
+		dispatchStore({
+			type: SET_PROJECTS_VIEW,
+			payload: list
+		});
+	};
 	const { filter: {
 		homeType: homeTypeCriteria,
 		price: priceCriteria,
-		floorSpace: floorSpaceCriteria
+		floorSpace: floorSpaceCriteria,
+		extras: extrasCriteria
 	}} = store;
 	const renderedElements = store.projects.view != null ? store.projects.view : store.projects.elements;
 
@@ -350,58 +385,26 @@ export default function ProjectPage() {
 								</div>
 							</div>
 						</div>
-						<div className="uk-margin">
-							<div
-								className="uk-grid-collapse"
-								uk-grid=""
-							>
-								<div className="uk-width-expand">
-									<label>Elevators</label>
+						{
+							EXTRAS.map(ele => (
+								<div
+									className="uk-margin"
+									key={ele.id}
+								>
+									<div
+										className="uk-grid-collapse"
+										uk-grid=""
+									>
+										<div className="uk-width-expand">
+											<label>{ele.name}</label>
+										</div>
+										<div className="uk-width-auto">
+											<input type="checkbox" className="uk-checkbox" onChange={(event) => onExtrasChange(ele.id, event)}/>
+										</div>
+									</div>
 								</div>
-								<div className="uk-width-auto">
-									<input type="radio" className="uk-radio"/>
-								</div>
-							</div>
-						</div>
-						<div className="uk-margin">
-							<div
-								className="uk-grid-collapse"
-								uk-grid=""
-							>
-								<div className="uk-width-expand">
-									<label>Swimming pool</label>
-								</div>
-								<div className="uk-width-auto">
-									<input type="radio" className="uk-radio"/>
-								</div>
-							</div>
-						</div>
-						<div className="uk-margin">
-							<div
-								className="uk-grid-collapse"
-								uk-grid=""
-							>
-								<div className="uk-width-expand">
-									<label>Finished basement</label>
-								</div>
-								<div className="uk-width-auto">
-									<input type="radio" className="uk-radio"/>
-								</div>
-							</div>
-						</div>
-						<div className="uk-margin">
-							<div
-								className="uk-grid-collapse"
-								uk-grid=""
-							>
-								<div className="uk-width-expand">
-									<label>Gym</label>
-								</div>
-								<div className="uk-width-auto">
-									<input type="radio" className="uk-radio"/>
-								</div>
-							</div>
-						</div>
+							))
+						}
 					</div>
 				</div>
 			</div>
