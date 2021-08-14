@@ -1,5 +1,12 @@
 {
 	"server": {
 		"url": "http://192.168.0.108:8080"
+	},
+	"auth": {
+		"tokenName": "nekot",
+		"role": {
+			"USER": "ROLE_USER",
+			"ADMIN": "ROLE_ADMIN"
+		}
 	}
 }

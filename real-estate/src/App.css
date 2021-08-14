@@ -4,8 +4,8 @@
 }
 
 .backgroundf {
-  background-color: var(--first-color);
-  color: var(--second-color);
+  background-color: var(--first-color) !important;
+  color: var(--second-color) !important;
 }
 
 .backgrounds {

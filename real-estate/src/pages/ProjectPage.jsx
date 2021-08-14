@@ -1,5 +1,11 @@
 import { useEffect, useReducer } from 'react';
+import { useHistory } from 'react-router-dom';
+
 import { $fetch } from '../fetch.js';
+
+import { useAuth } from '../hooks/auth';
+
+import { auth } from '../config/default';
 
 const ALL = "ALL";
 const MIN = "MIN";
@@ -98,6 +104,7 @@ export default function ProjectPage() {
 			}
 		}, { ...STORE }
 	);
+	const { principal } = useAuth();
 
 	useEffect(
 		() => {
@@ -135,7 +142,7 @@ export default function ProjectPage() {
 					payload: await getProjectsRes.json()
 				});
 			};
-			fetchStore();
+			fetchStore();		
 		},
 	[]);
 	const sort = (list, sortType, actionType) => {
@@ -172,7 +179,7 @@ export default function ProjectPage() {
 			headers: {
 				'Accept': 'application/json'
 			}
-		});
+		}, principal != null ? principal.token : null);
 
 		if (filterErr) {
 			console.log(filterErr);
@@ -243,7 +250,6 @@ export default function ProjectPage() {
 		const typeId = event.target.value;
 
 		if (typeId.length === 0 || typeId === store.filter.homeType) {
-			console.log("skip");
 			return;	
 		}
 
@@ -287,6 +293,38 @@ export default function ProjectPage() {
 			type: SET_PROJECTS_VIEW,
 			payload: list
 		});
+	};
+	const history = useHistory();
+	const onViewProject = (project) => history.push(`/p/${project.id}`);
+	const onDeleteProject = async (projectId) => {
+		const [res, err] = await $fetch(`/api/projects/${projectId}`, {
+			method: 'DELETE',
+			headers: {
+				'Accept': 'application/json'
+			}
+		}, principal.token);
+
+		if (err) {
+			console.error(err);
+			return;
+		}
+
+		if (res.ok) {
+			dispatchStore({
+				type: SET_PROJECTS,
+				payload: store.projects.elements.filter(project => project.id !== projectId)
+			});
+
+			if (store.projects.view != null) {
+				dispatchStore({
+					type: SET_PROJECTS_VIEW,
+					payload: store.projects.view.filter(project => project.id !== projectId)
+				});
+			}
+			return;
+		}
+
+		console.error(await res.json());
 	};
 	const { filter: {
 		homeType: homeTypeCriteria,
@@ -434,16 +472,22 @@ export default function ProjectPage() {
 					</header>
 					<section>
 						<div
-							className="uk-grid-small uk-grid-medium uk-child-width-1-4@s uk-flex-center uk-text-center uk-grid-match"
+							className="uk-grid-small uk-grid-medium uk-child-width-1-3 uk-flex-center uk-text-center uk-grid-match"
 							uk-grid=""
 						>
 						{
 							renderedElements.map(project => (
-								<div key={project.id}>
+								<div
+									key={project.id}
+									className="pointer"
+								>
 									<div
 										className="uk-card uk-box-shadow-large uk-card-default"
 									>
-										<div className="uk-card-body uk-padding-remove">
+										<div
+											className="uk-card-body uk-padding-remove"
+											onClick={() => onViewProject(project)}
+										>
 											<div className="uk-inline">
 												<img
 													className="uk-width-1-1 uk-height-1-1"
@@ -465,6 +509,23 @@ export default function ProjectPage() {
 													<span>{project.address}</span>
 												</dd>
 											</dl>
+										{
+											principal != null && principal.authorities.includes(auth.role.USER) ? (
+												<div>
+													<div
+														className="uk-icon-button uk-margin-right"
+														uk-icon="trash"
+														onClick={() => onDeleteProject(project.id)}
+													>
+													</div>
+													<div
+														className="uk-icon-button"
+														uk-icon="pencil"
+													>
+													</div>
+												</div>
+											) : null
+										}	
 										</div>
 									</div>
 								</div>

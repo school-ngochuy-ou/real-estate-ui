@@ -2,13 +2,13 @@ import { server } from "./config/default.json";
 
 const url = server.url;
 
-export async function $fetch(endpoint, options) {
+export async function $fetch(endpoint = "", options = { headers: {} }, token = "") {
 	try {
 		const res = await fetch(`${url}${encodeURI(endpoint)}`, {
 			...options,
 			headers: {
 				...options.headers,
-				'Authorization': 'JWTBearer',
+				'Authorization': `Bearer ${token}`,
 			},
 			credentials: 'include'
 		});
