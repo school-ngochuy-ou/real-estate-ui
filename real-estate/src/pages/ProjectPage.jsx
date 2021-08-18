@@ -545,10 +545,15 @@ export default function ProjectPage() {
 														className="uk-icon-button"
 														uk-icon="bookmark"
 														onClick={() => onBookmarkProject(project)}
-													>
-													</div>
+													></div>
 												</div>
-											) : null
+											) : (
+												<div
+													className="uk-icon-button"
+													uk-icon="bookmark"
+													onClick={() => onBookmarkProject(project)}
+												></div>
+											)
 										}	
 										</div>
 									</div>

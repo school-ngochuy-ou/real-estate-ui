@@ -261,7 +261,7 @@ export default function EditProjectPage() {
 		<div className="uk-container">
 			<div className="uk-width-2xlarge uk-margin-top">
 				<h1 className="uk-heading-line">
-					<span>{`Edit Project ${id}`}</span>
+					<span>{`Edit Project`}</span>
 				</h1>
 				<form onSubmit={onSubmit}>
 					<div className="uk-margin uk-grid-small uk-child-width-1-2" uk-grid="">
@@ -302,7 +302,7 @@ export default function EditProjectPage() {
 									type="number"
 									placeholder="Number of rooms"
 									onChange={onModelChange}
-									value={model.number}
+									value={model.rooms}
 								/>
 							</div>
 						</div>
