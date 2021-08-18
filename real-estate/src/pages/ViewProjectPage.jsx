@@ -1,7 +1,11 @@
 import { useEffect, useReducer, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
+
+import { useAuth } from '../hooks/auth';
 
 import { $fetch } from '../fetch';
+
+import { auth } from '../config/default';
 
 const STORE = {
 	model: null,
@@ -50,8 +54,9 @@ export default function ViewProjectPage() {
 
 		doFetch();
 	}, [id, dispatchStore]);
+	const { principal } = useAuth();
 	const switchGeneralView = () => {
-		setView(<GeneralView model={model} />);
+		setView(<GeneralView model={model} principal={principal}/>);
 	};
 	const switchDescriptionView = () => {
 		setView(<OwnerDescriptionView model={model} />);
@@ -80,17 +85,23 @@ export default function ViewProjectPage() {
 				</ul>
 			</div>
 			{
-				view == null ? <GeneralView model={model} /> : view
+				view == null ? (
+					<GeneralView
+						model={model}
+						principal={principal}
+					/>
+				)
+				: view
 			}
 		</div>
 	);
 }
 
-function GeneralView({ model = null }) {
+function GeneralView({ model = null, principal = null }) {
 	if (model == null) {
 		return null;
 	}
-
+	console.log(principal);
 	return (
 		<div>
 			<div className="uk-grid-small uk-child-width-1-2" uk-grid="">
@@ -107,6 +118,7 @@ function GeneralView({ model = null }) {
 								<td>{model.homeType.typeName}</td>
 							</tr>
 						</tbody>
+
 					</table>
 				</div>
 				<div>
@@ -128,6 +140,17 @@ function GeneralView({ model = null }) {
 			<div className="uk-margin">
 				<h4 className="uk-heading">Description</h4>
 				<p>{model.desciption}</p>
+			</div>
+			<div className="uk-margin">
+			{
+				principal != null && principal.authorities.includes(auth.role.USER) ? (
+					<Link to={`/project/edit/${model.id}`}>
+						<button className="uk-button backgroundf">
+							Edit Project
+						</button>
+					</Link>
+				) : null
+			}
 			</div>
 		</div>
 	);

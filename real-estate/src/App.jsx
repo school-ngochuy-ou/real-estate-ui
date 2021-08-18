@@ -8,14 +8,22 @@ import CreateUserPage from './pages/CreateUserPage.jsx';
 import ViewProjectPage from './pages/ViewProjectPage.jsx';
 import UserListPage from './pages/UserListPage.jsx';
 import EditUserPage from './pages/EditUserPage.jsx';
+import EditProjectPage from './pages/EditProjectPage.jsx';
+import BookmarkPage from './pages/BookmarkPage.jsx';
 
 function App() {
 	return (
 		<div className="App">
 			<Navbar />
 			<Switch>
+				<Route path="/bookmark" render={
+					props => <BookmarkPage {...props} />
+				}/>
 				<Route path="/user/create" render={
 					props => <CreateUserPage {...props} />
+				}/>
+				<Route path="/project/edit/:id" render={
+					props => <EditProjectPage {...props} />
 				}/>
 				<Route path="/project" render={
 					props => <CreateProjectPage {...props} />

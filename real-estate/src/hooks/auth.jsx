@@ -32,13 +32,18 @@ export default function AuthenticationContextProvider({ children }) {
 			}, token);
 
 			if (err) {
-				console.error(err);
+				setPrincipal(null);
 				return;
 			}
 
-			res = await res.json();
-			
-			setPrincipal({ ...res, token });
+			if (res.ok) {
+				res = await res.json();
+				
+				setPrincipal({ ...res, token });
+				return;
+			}
+
+			setPrincipal(null);
 		};
 
 		doFetch();

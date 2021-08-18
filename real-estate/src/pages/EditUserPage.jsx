@@ -1,4 +1,4 @@
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { $fetch } from '../fetch';
@@ -27,12 +27,12 @@ const store = {
 		"authorities" : []
 	}
 };
-const roles = Object.entries(auth.role).map(role => role[1].split("ROLE_")[1]);
 
 export default function EditUserPage() {
 	const [model, setModel] = useState(store.model);
 	const { principal } = useAuth();
 	const { id: username } = useParams();
+	let [login, setLogin] = useState('');
 
 	useEffect(() => {
 		if (principal == null || username == null || username.length === 0) {
@@ -53,7 +53,13 @@ export default function EditUserPage() {
 			}
 
 			if (res.ok) {
-				setModel(await res.json());
+				const model = await res.json();
+
+				setModel(model);
+				setLogin(`${model.login}`);
+				// eslint-disable-next-line
+				setLogin = () => null;
+
 				return;
 			}
 
@@ -70,22 +76,6 @@ export default function EditUserPage() {
 			[name]: value
 		});
 	};
-	const onModelAuthoritiesChange = (event) => {
-		const { target: { value, checked } } = event;
-
-		if (checked === false) {
-			setModel({
-				...model,
-				authorities: [...model.authorities].filter(role => role !== value)
-			});
-			return;
-		}
-
-		setModel({
-			...model,
-			authorities: [...model.authorities, value]
-		});
-	}
 	const onSubmit = async (event) => {
 		event.preventDefault();
 		event.stopPropagation();
@@ -123,7 +113,7 @@ export default function EditUserPage() {
 	return (
 		<div className="uk-container">
 			<h1 className="uk-heading-line">
-				<span>Edit User {model && model.login}</span>
+				<span>Edit User {login}</span>
 			</h1>
 			<form onSubmit={onSubmit}>
 				<div className="uk-margin">
@@ -181,79 +171,6 @@ export default function EditUserPage() {
 						onChange={onModelChange}
 					/>
 				</div>
-				{
-					principal.authorities.includes(auth.role.ADMIN) ? (
-						<Fragment>
-							<div className="uk-margin">
-								<label className="uk-label backgroundf">Login</label>
-								<input
-									className="uk-input"
-									type="text"
-									placeholder="Login"
-									name="login"
-									value={model.login}
-									onChange={onModelChange}
-								/>
-							</div>
-							<div className="uk-margin">
-								<label className="uk-label backgroundf">Authorities</label>
-								<br/>
-								{
-									roles.map(role => (
-										<div
-											className="uk-margin-small"
-											key={role}
-										>
-											<input
-												className="uk-checkbox uk-margin-small-right"
-												type="checkbox"
-												name="authorities"
-												checked={model.authorities.includes(`ROLE_${role}`)}
-												value={`ROLE_${role}`}
-												onChange={onModelAuthoritiesChange}
-											/>
-											<label>{role}</label>		
-										</div>
-									))
-								}
-							</div>
-							<div className="uk-margin">
-								<label className="uk-label backgroundf">Activation</label>
-								<br/>
-								<div className="uk-margin-small">
-									<input
-										className="uk-radio uk-margin-small-right"
-										type="radio"
-										name="activated"
-										value={true}
-										onChange={onModelChange}
-									/>
-									<label>Active</label>
-								</div>
-								<div className="uk-margin-small">
-									<input
-										className="uk-radio uk-margin-small-right"
-										type="radio"
-										name="activated"
-										value={false}
-										onChange={onModelChange}
-									/>
-									<label>Inactive</label>
-								</div>
-							</div>
-							<div className="uk-margin">
-								<label className="uk-label backgroundf">Language Key</label>
-								<input
-									className="uk-input"
-									type="text"
-									name="langKey"
-									value={model.langKey}
-									onChange={onModelChange}
-								/>
-							</div>
-						</Fragment>
-					) : null
-				}
 				<div className="uk-margin">
 					<button
 						type="Submit"

@@ -326,6 +326,24 @@ export default function ProjectPage() {
 
 		console.error(await res.json());
 	};
+	const onBookmarkProject = (project) => {
+		let { bookmark } = localStorage;
+
+		if (bookmark == null) {
+			localStorage.bookmark = JSON.stringify([project]);
+			return;
+		}
+
+		bookmark = JSON.parse(bookmark);
+		
+		for (let savedProject of bookmark) {
+			if (savedProject.id === project.id) {
+				return;
+			}
+		}
+
+		localStorage.bookmark = JSON.stringify([...bookmark, project]);
+	};
 	const { filter: {
 		homeType: homeTypeCriteria,
 		price: priceCriteria,
@@ -519,8 +537,14 @@ export default function ProjectPage() {
 													>
 													</div>
 													<div
-														className="uk-icon-button"
+														className="uk-icon-button uk-margin-right"
 														uk-icon="pencil"
+													>
+													</div>
+													<div
+														className="uk-icon-button"
+														uk-icon="bookmark"
+														onClick={() => onBookmarkProject(project)}
 													>
 													</div>
 												</div>

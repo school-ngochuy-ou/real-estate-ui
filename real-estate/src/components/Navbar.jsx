@@ -39,7 +39,13 @@ export default function Navbar() {
 			[event.target.name]: event.target.value
 		});
 	};
-
+	const onInputKeyDown = (event) => {
+		if (event.keyCode === 13) {
+			onSubmit(event);
+			return;
+		}
+	}
+	
 	return (
 		<Fragment>
 			<nav className="uk-navbar-container backgroundf" uk-navbar="">
@@ -51,6 +57,13 @@ export default function Navbar() {
 					</Link>
 				</div>
 				<div className="uk-navbar-right uk-margin-right">
+					<Link to="/bookmark">
+						<button
+							className="uk-button uk-button-muted uk-text-emphasis uk-margin-right"
+						>
+							Saved Projects
+						</button>
+					</Link>
 				{
 					principal != null && principal.authorities.includes(auth.role.ADMIN) ? (
 						<Link to="/user/list">
@@ -98,6 +111,7 @@ export default function Navbar() {
 											placeholder="Username"
 											value={model.username}
 											onChange={onModelChange}
+											onKeyDown={onInputKeyDown}
 										/>
 									</div>
 									<div className="uk-margin">
@@ -109,6 +123,7 @@ export default function Navbar() {
 											placeholder="Password"
 											value={model.password}
 											onChange={onModelChange}
+											onKeyDown={onInputKeyDown}
 										/>
 									</div>
 								</form>
