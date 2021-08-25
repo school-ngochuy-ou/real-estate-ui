@@ -29,6 +29,7 @@ const SET_HOMETYPES = "SET_HOMETYPES";
 const SET_PROJECTS = "SET_PROJECTS";
 const SET_PROJECTS_VIEW = "SET_PROJECTS_VIEW";
 const MODIFY_FILTER = "MODIFY_FILTER";
+const RESET_FILTER = "RESET_FILTER";
 
 const SORTS_NO_SORT = "NO_SORT";
 const SORTS_LOWEST_PRICE = "LOWEST_PRICE";
@@ -72,6 +73,16 @@ export default function ProjectPage() {
 							[name]: value
 						}
 					};
+				}
+				case RESET_FILTER: {
+					return  {
+						...oldState,
+						projects: {
+							...oldState.projects,
+							view: null
+						},
+						filter: {...STORE.filter}
+					};	
 				}
 				case SET_HOMETYPES: {
 					if (!Array.isArray(payload)) {
@@ -192,6 +203,10 @@ export default function ProjectPage() {
 		const value = event.target.value === 0 ? 0 : parseInt(event.target.value);
 
 		if (value < 0 || isNaN(value)) {
+			dispatchStore({
+				type: SET_PROJECTS_VIEW,
+				payload: null
+			});
 			return;
 		}
 
@@ -344,6 +359,12 @@ export default function ProjectPage() {
 
 		localStorage.bookmark = JSON.stringify([...bookmark, project]);
 	};
+	const clearFilter = () => {
+		dispatchStore({
+			type: RESET_FILTER,
+			payload: null
+		});
+	};
 	const { filter: {
 		homeType: homeTypeCriteria,
 		price: priceCriteria,
@@ -360,8 +381,18 @@ export default function ProjectPage() {
 		>
 			<div className="uk-width-1-4">
 				<div className="uk-padding-small">
-					<div className="uk-margin">
-						<label className="uk-label backgroundf">Filter</label>
+					<div className="uk-margin uk-grid uk-grid-collapse uk-child-width-1-2" uk-grid="">
+						<div>
+							<label className="uk-label backgroundf">Filter</label>
+						</div>
+						<div className="uk-text-right">
+							<button
+								className="uk-button uk-button-default"
+								onClick={clearFilter}
+							>
+								Clear
+							</button>
+						</div>
 					</div>
 					<div>
 						<div className="uk-margin">
@@ -473,7 +504,6 @@ export default function ProjectPage() {
 								<select
 									className="uk-select"
 									onChange={sortProjects}
-									value={SORTS_NO_SORT}
 								>
 									<option
 										value={SORTS_NO_SORT}
@@ -518,7 +548,7 @@ export default function ProjectPage() {
 										</div>
 										<div className="uk-card-footer">
 											<dl className="uk-description-list">
-												<dt>{project.price}</dt>
+												<span className="uk-text-lead">{project.price}</span>
 												<dd>
 													<span
 														className="uk-margin-small-right"
@@ -539,6 +569,7 @@ export default function ProjectPage() {
 													<div
 														className="uk-icon-button uk-margin-right"
 														uk-icon="pencil"
+														onClick={() => history.push(`/project/edit/${project.id}`)}
 													>
 													</div>
 													<div

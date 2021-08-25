@@ -1,5 +1,5 @@
 import { Fragment, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 
 import { useAuth } from '../hooks/auth';
 import { $fetch } from '../fetch';
@@ -11,6 +11,7 @@ export default function Navbar() {
 		username: "",
 		password: ""
 	});
+	const history = useHistory();
 	const [loginFormVision, toggleLoginFormVision] = useState(false);
 	const { principal } = useAuth();
 	const onSubmit = async (event) => {
@@ -82,13 +83,19 @@ export default function Navbar() {
 							Login
 						</button>
 					) : (
-						<button className="uk-button uk-button-muted uk-text-emphasis"
-						onClick={() => {
-							removeCookie(auth.tokenName);
-							window.location.reload(false);
-						}}>
-							Logout
-						</button>
+						<Fragment>
+							<button className="uk-button uk-button-muted uk-text-emphasis uk-margin-right"
+							onClick={() => history.push("/project")}>
+								Create Project
+							</button>
+							<button className="uk-button uk-button-muted uk-text-emphasis"
+							onClick={() => {
+								removeCookie(auth.tokenName);
+								window.location.reload(false);
+							}}>
+								Logout
+							</button>
+						</Fragment>
 					)
 				}	
 				</div>
