@@ -18,7 +18,7 @@ const STORE = {
 			floorSpace: 10.00,
 			attachment: "",
 			extras: [],
-			homeType: ""
+			homeType: null
 		},
 		extras: [],
 		homeTypes: []
@@ -103,7 +103,12 @@ export default function CreateProjectPage() {
 				'Content-Type': 'application/json',
 				'Accept': 'application/json'
 			},
-			body: JSON.stringify(model)
+			body: JSON.stringify({
+				...model,
+				userDTO: {
+					...principal
+				}
+			})
 		}, principal.token);
 
 		if (err) {
@@ -318,7 +323,7 @@ export default function CreateProjectPage() {
 							<select
 								name="homeType" className="uk-width-1-1 uk-select"
 								placeholder="Home Type"
-								onChange={onHomeTypeChange} value={model.homeType.id}
+								onChange={onHomeTypeChange} value={model.homeType && model.homeType.id}
 							>
 							{
 								homeTypes.map(ele => (

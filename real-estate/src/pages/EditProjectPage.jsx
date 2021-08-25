@@ -372,7 +372,7 @@ export default function EditProjectPage() {
 								<select
 									name="homeType" className="uk-width-1-1 uk-select"
 									placeholder="Home Type"
-									onChange={onHomeTypeChange} value={model.homeType.id}
+									onChange={onHomeTypeChange} value={model.homeType && model.homeType.id}
 								>
 								{
 									homeTypes.map(ele => (

@@ -101,7 +101,7 @@ function GeneralView({ model = null, principal = null }) {
 	if (model == null) {
 		return null;
 	}
-	console.log(principal);
+	
 	return (
 		<div>
 			<div className="uk-grid-small uk-child-width-1-2" uk-grid="">
@@ -115,7 +115,7 @@ function GeneralView({ model = null, principal = null }) {
 							</tr>
 							<tr>
 								<td className="uk-text-bold">Type</td>
-								<td>{model.homeType.typeName}</td>
+								<td>{model.homeType && model.homeType.typeName}</td>
 							</tr>
 						</tbody>
 

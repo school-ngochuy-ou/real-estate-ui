@@ -236,6 +236,10 @@ export default function ProjectPage() {
 		const value = event.target.value === 0 ? 0 : parseInt(event.target.value);
 
 		if (value < 0 || isNaN(value)) {
+			dispatchStore({
+				type: SET_PROJECTS_VIEW,
+				payload: null
+			});
 			return;
 		}
 
